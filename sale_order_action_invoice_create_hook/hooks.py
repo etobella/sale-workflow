@@ -21,6 +21,7 @@ def post_load_hook():
             return self.action_invoice_create_original(grouped=grouped,
                                                        final=final)
         invoices = {}
+        final_inv = {}
         references = {}
 
         # START HOOK
@@ -59,6 +60,8 @@ def post_load_hook():
                 # respecting the old logic
                 if group_key in invoices:
                     invoice = invoices[group_key]
+                if invoice not in final_inv:
+                    final_inv[group_key] = invoice
                     # END HOOK
                 if group_key not in invoices:
                     inv_data = line._prepare_invoice()
@@ -108,7 +111,7 @@ def post_load_hook():
             raise UserError(_('There is no invoicable line.'))
         # END HOOK
 
-        for invoice in invoices.values():
+        for invoice in final_inv.values():
             if not invoice.invoice_line_ids:
                 raise UserError(_('There is no invoicable line.'))
             # If invoice is negative, do a refund invoice instead
@@ -127,7 +130,7 @@ def post_load_hook():
                 'mail.message_origin_link',
                 values={'self': invoice, 'origin': references[invoice]},
                 subtype_id=self.env.ref('mail.mt_note').id)
-        return [inv.id for inv in invoices.values()]
+        return [inv.id for inv in final_inv.values()]
 
     if not hasattr(SaleOrder, 'action_invoice_create_original'):
         SaleOrder.action_invoice_create_original = \
