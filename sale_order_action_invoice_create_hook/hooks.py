@@ -60,8 +60,6 @@ def post_load_hook():
                 # respecting the old logic
                 if group_key in invoices:
                     invoice = invoices[group_key]
-                if invoice not in final_inv:
-                    final_inv[group_key] = invoice
                     # END HOOK
                 if group_key not in invoices:
                     inv_data = line._prepare_invoice()
@@ -85,6 +83,8 @@ def post_load_hook():
                         vals['name'] = invoices[group_key].name + ', ' +\
                             order.client_order_ref
                     invoices[group_key].write(vals)
+                if invoice not in final_inv:
+                    final_inv[group_key] = invoice
                 if line.qty_to_invoice > 0:
                     line.invoice_line_create(invoices[group_key].id,
                                              line.qty_to_invoice)
